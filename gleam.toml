@@ -1,0 +1,11 @@
+name = "aoc2024"
+version = "1.0.0"
+
+licences = ["Apache-2.0"]
+repository = { type = "github", user = "denaun", repo = "aoc-2024" }
+
+[dependencies]
+gleam_stdlib = ">= 0.34.0 and < 2.0.0"
+
+[dev-dependencies]
+gleeunit = ">= 1.0.0 and < 2.0.0"
