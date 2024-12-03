@@ -3,6 +3,7 @@ import atto.{type Parser}
 import atto/ops
 import atto/text
 import atto/text_util
+import counter
 import gleam/int
 import gleam/io
 import gleam/list
@@ -35,7 +36,11 @@ pub fn part1(input: String) {
 }
 
 pub fn part2(input: String) {
-  todo as "Implement solution to part 2"
+  let assert Ok(#(first, second)) = atto.run(parser(), text.new(input), Nil)
+  let counts = second |> counter.from_list
+  first
+  |> list.map(fn(v) { counts |> counter.get(v) |> int.multiply(v) })
+  |> list.fold(0, int.add)
 }
 
 pub fn main() {
