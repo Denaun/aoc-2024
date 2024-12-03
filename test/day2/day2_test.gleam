@@ -9,7 +9,7 @@ type Problem1AnswerType =
   Int
 
 type Problem2AnswerType =
-  String
+  Int
 
 const part1_examples: List(Example(Problem1AnswerType)) = [
   Example(
@@ -23,7 +23,17 @@ const part1_examples: List(Example(Problem1AnswerType)) = [
   ),
 ]
 
-const part2_examples: List(Example(Problem2AnswerType)) = []
+const part2_examples: List(Example(Problem2AnswerType)) = [
+  Example(
+    "7 6 4 2 1
+1 2 7 8 9
+9 7 6 2 1
+1 3 2 4 5
+8 6 4 4 1
+1 3 6 7 9",
+    4,
+  ),
+]
 
 pub fn parser_test() {
   atto.run(
@@ -47,7 +57,7 @@ pub fn part1_test() {
 
 pub fn part2_test() {
   part2_examples
-  |> should.equal([])
+  |> should.not_equal([])
   use example <- list.map(part2_examples)
   solve.part2(example.input)
   |> should.equal(example.answer)

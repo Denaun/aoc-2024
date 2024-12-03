@@ -14,20 +14,27 @@ pub fn parser() -> Parser(List(List(Int)), String, String, e, f) {
 
 pub fn part1(input: String) -> Int {
   let assert Ok(reports) = atto.run(parser(), text.new(input), Nil)
-  reports
-  |> list.count(fn(report) {
-    let assert [a, b, ..] = report
-    case a > b {
-      True -> report
-      False -> report |> list.map(int.negate)
-    }
-    |> list.window_by_2()
-    |> list.all(fn(pair) { pair.0 >= pair.1 + 1 && pair.0 <= pair.1 + 3 })
-  })
+  reports |> list.count(is_safe)
 }
 
 pub fn part2(input: String) {
-  todo as "Implement solution to part 2"
+  let assert Ok(reports) = atto.run(parser(), text.new(input), Nil)
+  reports
+  |> list.count(fn(report) {
+    report
+    |> list.combinations(list.length(report) - 1)
+    |> list.any(is_safe)
+  })
+}
+
+fn is_safe(report: List(Int)) -> Bool {
+  let assert [a, b, ..] = report
+  case a > b {
+    True -> report
+    False -> report |> list.map(int.negate)
+  }
+  |> list.window_by_2()
+  |> list.all(fn(pair) { pair.0 >= pair.1 + 1 && pair.0 <= pair.1 + 3 })
 }
 
 pub fn main() {
