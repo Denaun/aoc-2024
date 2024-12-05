@@ -7,12 +7,15 @@ import counter
 import gleam/int
 import gleam/io
 import gleam/list
+import parse_util
 
 fn line() -> Parser(#(Int, Int), String, String, e, f) {
   use <- atto.label("line")
-  use a <- atto.do(text_util.decimal() |> text_util.ws())
-  use b <- atto.do(text_util.decimal())
-  atto.pure(#(a, b))
+  parse_util.sep_by(
+    text_util.decimal(),
+    text_util.hspaces1(),
+    text_util.decimal(),
+  )
 }
 
 pub fn parser() -> Parser(#(List(Int), List(Int)), String, String, e, f) {
