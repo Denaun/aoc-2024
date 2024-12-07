@@ -22,7 +22,7 @@ pub fn part1(input: String) {
   tests
   |> list.filter_map(fn(t) {
     let #(goal, numbers) = t
-    case numbers |> can_equal(goal) {
+    case numbers |> can_equal([int.add, int.multiply], goal) {
       True -> Ok(goal)
       _ -> Error(Nil)
     }
@@ -31,21 +31,45 @@ pub fn part1(input: String) {
 }
 
 pub fn part2(input: String) {
-  todo as "Implement solution to part 2"
+  let assert Ok(tests) = parser() |> atto.run(text.new(input), Nil)
+  tests
+  |> list.filter_map(fn(t) {
+    let #(goal, numbers) = t
+    case numbers |> can_equal([int.add, int.multiply, concat], goal) {
+      True -> Ok(goal)
+      _ -> Error(Nil)
+    }
+  })
+  |> list.fold(0, int.add)
 }
 
-fn can_equal(numbers: List(Int), goal: Int) -> Bool {
-  can_equal_loop(numbers, goal, 0)
+fn can_equal(
+  numbers: List(Int),
+  operators: List(fn(Int, Int) -> Int),
+  goal: Int,
+) -> Bool {
+  can_equal_loop(numbers, operators, goal, 0)
 }
 
-fn can_equal_loop(numbers: List(Int), goal: Int, current: Int) -> Bool {
+fn can_equal_loop(
+  numbers: List(Int),
+  operators: List(fn(Int, Int) -> Int),
+  goal: Int,
+  current: Int,
+) -> Bool {
   case numbers {
     [] -> goal == current
-    [x, ..rest] -> {
-      can_equal_loop(rest, goal, current * x)
-      || can_equal_loop(rest, goal, current + x)
-    }
+    [x, ..rest] ->
+      operators
+      |> list.any(fn(op) {
+        can_equal_loop(rest, operators, goal, op(current, x))
+      })
   }
+}
+
+fn concat(a: Int, b: Int) -> Int {
+  let assert Ok(c) = int.parse(int.to_string(a) <> int.to_string(b))
+  c
 }
 
 pub fn main() {
