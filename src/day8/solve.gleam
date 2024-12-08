@@ -5,6 +5,7 @@ import gleam/io
 import gleam/list
 import gleam/option
 import gleam/string
+import gleam/yielder
 
 fn parse(input: String) -> #(Coord, Dict(String, List(Coord))) {
   input
@@ -50,7 +51,22 @@ pub fn part1(input: String) {
 }
 
 pub fn part2(input: String) {
-  todo as "Implement solution to part 2"
+  let #(size, antennas) = input |> parse()
+  antennas
+  |> dict.values()
+  |> list.flat_map(list.combination_pairs)
+  |> list.flat_map(fn(pair) {
+    let #(a, b) = pair
+    let from_a =
+      yielder.iterate(a, coord.add(_, a |> coord.subtract(b)))
+      |> yielder.take_while(coord.is_inside(_, size))
+    let from_b =
+      yielder.iterate(b, coord.add(_, b |> coord.subtract(a)))
+      |> yielder.take_while(coord.is_inside(_, size))
+    from_a |> yielder.append(from_b) |> yielder.to_list()
+  })
+  |> list.unique()
+  |> list.length()
 }
 
 pub fn main() {
