@@ -1,5 +1,5 @@
 import adglent.{First, Second}
-import gleam/int
+import coord.{type Coord}
 import gleam/io
 import gleam/list
 import gleam/option.{type Option, None, Some}
@@ -8,22 +8,18 @@ import gleam/set.{type Set}
 import gleam/string
 import gleam/yielder.{Next}
 
-pub type Pos {
-  Pos(x: Int, y: Int)
-}
-
-pub fn parse(input: String) -> #(Pos, Option(Pos), Set(Pos)) {
+pub fn parse(input: String) -> #(Coord, Option(Coord), Set(Coord)) {
   input
   |> string.split("\n")
-  |> list.index_fold(#(Pos(0, 0), None, set.new()), fn(acc, line, x) {
+  |> list.index_fold(#(coord.origin(), None, set.new()), fn(acc, line, x) {
     line
     |> string.to_graphemes()
     |> list.index_fold(acc, fn(acc, c, y) {
       let #(size, guard, obstacles) = acc
-      let size = Pos(int.max(size.x, x + 1), int.max(size.y, y + 1))
+      let size = size |> coord.max(coord.new(x + 1, y + 1))
       case c {
-        "#" -> #(size, guard, obstacles |> set.insert(Pos(x, y)))
-        "^" -> #(size, Some(Pos(x, y)), obstacles)
+        "#" -> #(size, guard, obstacles |> set.insert(coord.new(x, y)))
+        "^" -> #(size, Some(coord.new(x, y)), obstacles)
         _ -> #(size, guard, obstacles)
       }
     })
@@ -35,7 +31,7 @@ pub fn part1(input: String) {
   obstacles
   |> moves(from: #(guard, Up))
   |> yielder.map(fn(x) { x.0 })
-  |> yielder.take_while(is_inside(_, size))
+  |> yielder.take_while(coord.is_inside(_, size))
   |> yielder.fold(set.new(), set.insert)
   |> set.size()
 }
@@ -45,14 +41,14 @@ pub fn part2(input: String) {
   let initial = #(guard, Up)
   obstacles
   |> moves(from: initial)
-  |> yielder.take_while(fn(vec) { vec.0 |> is_inside(size) })
+  |> yielder.take_while(fn(vec) { vec.0 |> coord.is_inside(size) })
   |> yielder.filter_map(fn(vec) {
     let assert Ok(#(obstacle, _)) =
       obstacles |> moves(from: vec) |> yielder.at(1)
     obstacles
     |> set.insert(obstacle)
     |> moves(from: initial)
-    |> yielder.take_while(fn(vec) { vec.0 |> is_inside(size) })
+    |> yielder.take_while(fn(vec) { vec.0 |> coord.is_inside(size) })
     |> yielder.transform(set.new(), fn(visited, vec) {
       Next(visited |> set.contains(vec), visited |> set.insert(vec))
     })
@@ -65,9 +61,9 @@ pub fn part2(input: String) {
 }
 
 fn moves(
-  obstacles: Set(Pos),
-  from initial: #(Pos, Direction),
-) -> yielder.Yielder(#(Pos, Direction)) {
+  obstacles: Set(Coord),
+  from initial: #(Coord, Direction),
+) -> yielder.Yielder(#(Coord, Direction)) {
   use #(guard, direction) <- yielder.iterate(initial)
   let assert Ok(next) =
     yielder.iterate(direction, turn_right)
@@ -97,17 +93,13 @@ fn turn_right(from: Direction) -> Direction {
   }
 }
 
-fn move(p: Pos, d: Direction) -> Pos {
+fn move(p: Coord, d: Direction) -> Coord {
   case d {
-    Up -> Pos(p.x - 1, p.y)
-    Left -> Pos(p.x, p.y - 1)
-    Down -> Pos(p.x + 1, p.y)
-    Right -> Pos(p.x, p.y + 1)
+    Up -> coord.new(p.x - 1, p.y)
+    Left -> coord.new(p.x, p.y - 1)
+    Down -> coord.new(p.x + 1, p.y)
+    Right -> coord.new(p.x, p.y + 1)
   }
-}
-
-fn is_inside(p: Pos, size: Pos) {
-  p.x >= 0 && p.y >= 0 && p.x < size.x && p.y < size.y
 }
 
 pub fn main() {
