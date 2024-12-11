@@ -6,30 +6,25 @@ import gleam/list
 import gleam/option
 import gleam/string
 import gleam/yielder
+import parse_util
 
 fn parse(input: String) -> #(Coord, Dict(String, List(Coord))) {
   input
-  |> string.split("\n")
-  |> list.index_fold(#(coord.origin(), dict.new()), fn(acc, line, x) {
-    line
-    |> string.to_graphemes()
-    |> list.index_fold(acc, fn(acc, c, y) {
-      let #(size, antennas) = acc
-      let size = size |> coord.max(coord.new(x + 1, y + 1))
-      case c {
-        "." -> #(size, antennas)
-        _ -> #(
-          size,
-          antennas
-            |> dict.upsert(c, fn(coords) {
-              let new = coord.new(x, y)
-              coords
-              |> option.map(list.prepend(_, new))
-              |> option.unwrap([new])
-            }),
-        )
-      }
-    })
+  |> parse_util.parse_map(#(coord.origin(), dict.new()), fn(acc, c, coord) {
+    let #(size, antennas) = acc
+    let size = size |> coord.max(coord.new(coord.x + 1, coord.y + 1))
+    case c {
+      "." -> #(size, antennas)
+      _ -> #(
+        size,
+        antennas
+          |> dict.upsert(c, fn(coords) {
+            coords
+            |> option.map(list.prepend(_, coord))
+            |> option.unwrap([coord])
+          }),
+      )
+    }
   })
 }
 

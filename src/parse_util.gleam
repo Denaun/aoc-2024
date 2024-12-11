@@ -1,4 +1,7 @@
 import atto.{type Parser}
+import coord.{type Coord}
+import gleam/list
+import gleam/string
 
 pub fn sep_by(
   left: Parser(a, t, s, c, e),
@@ -22,4 +25,18 @@ pub fn non_consuming(a: Parser(a, t, s, c, e)) {
     }
   }
   |> atto.Parser
+}
+
+pub fn parse_map(
+  input: String,
+  from initial: acc,
+  with fun: fn(acc, String, Coord) -> acc,
+) -> acc {
+  input
+  |> string.split("\n")
+  |> list.index_fold(initial, fn(acc, line, x) {
+    line
+    |> string.to_graphemes()
+    |> list.index_fold(acc, fn(acc, c, y) { fun(acc, c, coord.new(x, y)) })
+  })
 }

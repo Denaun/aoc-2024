@@ -1,28 +1,22 @@
 import adglent.{First, Second}
 import coord.{type Coord}
 import gleam/io
-import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/set.{type Set}
-import gleam/string
 import gleam/yielder.{Next}
+import parse_util
 
 pub fn parse(input: String) -> #(Coord, Option(Coord), Set(Coord)) {
   input
-  |> string.split("\n")
-  |> list.index_fold(#(coord.origin(), None, set.new()), fn(acc, line, x) {
-    line
-    |> string.to_graphemes()
-    |> list.index_fold(acc, fn(acc, c, y) {
-      let #(size, guard, obstacles) = acc
-      let size = size |> coord.max(coord.new(x + 1, y + 1))
-      case c {
-        "#" -> #(size, guard, obstacles |> set.insert(coord.new(x, y)))
-        "^" -> #(size, Some(coord.new(x, y)), obstacles)
-        _ -> #(size, guard, obstacles)
-      }
-    })
+  |> parse_util.parse_map(#(coord.origin(), None, set.new()), fn(acc, c, coord) {
+    let #(size, guard, obstacles) = acc
+    let size = size |> coord.max(coord.new(coord.x + 1, coord.y + 1))
+    case c {
+      "#" -> #(size, guard, obstacles |> set.insert(coord))
+      "^" -> #(size, Some(coord), obstacles)
+      _ -> #(size, guard, obstacles)
+    }
   })
 }
 
