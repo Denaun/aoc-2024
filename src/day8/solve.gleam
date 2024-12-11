@@ -4,7 +4,6 @@ import gleam/dict.{type Dict}
 import gleam/io
 import gleam/list
 import gleam/option
-import gleam/string
 import gleam/yielder
 import parse_util
 

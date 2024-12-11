@@ -7,7 +7,7 @@ type Problem1AnswerType =
   Int
 
 type Problem2AnswerType =
-  String
+  Int
 
 const part1_examples: List(Example(Problem1AnswerType)) = [
   Example("125 17", 55_312),
