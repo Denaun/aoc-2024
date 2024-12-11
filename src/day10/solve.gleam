@@ -18,16 +18,28 @@ pub fn part1(input: String) {
   height_by_coord
   |> dict.filter(fn(_, height) { height == 0 })
   |> dict.keys()
-  |> list.flat_map(trail_ends(height_by_coord, _))
+  |> list.flat_map(fn(start) {
+    trail_ends(height_by_coord, start) |> list.unique()
+  })
   |> list.length()
 }
 
 pub fn part2(input: String) {
-  todo as "Implement solution to part 2"
+  let height_by_coord =
+    input
+    |> parse_util.parse_map(dict.new(), fn(height_by_coord, c, coord) {
+      let assert Ok(h) = c |> int.parse()
+      height_by_coord |> dict.insert(coord, h)
+    })
+  height_by_coord
+  |> dict.filter(fn(_, height) { height == 0 })
+  |> dict.keys()
+  |> list.flat_map(trail_ends(height_by_coord, _))
+  |> list.length()
 }
 
 fn trail_ends(height_by_coord: Dict(Coord, Int), from c: Coord) {
-  trail_ends_loop(height_by_coord, c, set.from_list([c])) |> list.unique()
+  trail_ends_loop(height_by_coord, c, set.from_list([c]))
 }
 
 fn trail_ends_loop(
