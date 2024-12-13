@@ -7,7 +7,7 @@ type Problem1AnswerType =
   Int
 
 type Problem2AnswerType =
-  String
+  Int
 
 const part1_examples: List(Example(Problem1AnswerType)) = [
   Example(
@@ -40,11 +40,53 @@ MMMISSJEEE",
   ),
 ]
 
-/// Add examples for part 2 here:
-/// ```gleam
-///const part2_examples: List(Example(Problem2AnswerType)) = [Example("some input", "")]
-/// ```
-const part2_examples: List(Example(Problem2AnswerType)) = []
+const part2_examples: List(Example(Problem2AnswerType)) = [
+  Example(
+    "AAAA
+BBCD
+BBCC
+EEEC",
+    80,
+  ),
+  Example(
+    "OOOOO
+OXOXO
+OOOOO
+OXOXO
+OOOOO",
+    436,
+  ),
+  Example(
+    "EEEEE
+EXXXX
+EEEEE
+EXXXX
+EEEEE",
+    236,
+  ),
+  Example(
+    "AAAAAA
+AAABBA
+AAABBA
+ABBAAA
+ABBAAA
+AAAAAA",
+    368,
+  ),
+  Example(
+    "RRRRIICCFF
+RRRRIICCCF
+VVRRRCCFFF
+VVRCCCJFFF
+VVVVCJJCFE
+VVIVCCJJEE
+VVIIICJJEE
+MIIIIIJJEE
+MIIISIJEEE
+MMMISSJEEE",
+    1206,
+  ),
+]
 
 pub fn part1_test() {
   part1_examples
@@ -56,7 +98,7 @@ pub fn part1_test() {
 
 pub fn part2_test() {
   part2_examples
-  |> should.equal([])
+  |> should.not_equal([])
   use example <- list.map(part2_examples)
   solve.part2(example.input)
   |> should.equal(example.answer)
