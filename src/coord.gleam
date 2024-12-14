@@ -8,6 +8,10 @@ pub fn new(x: Int, y: Int) -> Coord {
   Coord(x, y)
 }
 
+pub fn from_pair(pair: #(Int, Int)) -> Coord {
+  Coord(pair.0, pair.1)
+}
+
 pub fn origin() -> Coord {
   Coord(0, 0)
 }
@@ -26,6 +30,10 @@ pub fn max(a: Coord, b: Coord) -> Coord {
 
 fn map2(a: Coord, b: Coord, f: fn(Int, Int) -> Int) {
   Coord(f(a.x, b.x), f(a.y, b.y))
+}
+
+pub fn map3(a: Coord, b: Coord, c: Coord, f: fn(Int, Int, Int) -> Int) {
+  Coord(f(a.x, b.x, c.x), f(a.y, b.y, c.y))
 }
 
 pub fn is_inside(p: Coord, size: Coord) -> Bool {

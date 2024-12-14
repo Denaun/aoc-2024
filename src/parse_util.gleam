@@ -1,7 +1,13 @@
 import atto.{type Parser}
+import atto/text_util
 import coord.{type Coord}
+import gleam/int
 import gleam/list
 import gleam/string
+
+pub fn signed_int() -> Parser(Int, String, String, c, e) {
+  text_util.signed(text_util.decimal(), int.negate)
+}
 
 pub fn sep_by(
   left: Parser(a, t, s, c, e),
