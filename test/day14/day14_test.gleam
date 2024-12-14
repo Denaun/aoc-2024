@@ -8,7 +8,7 @@ type Problem1AnswerType =
   Int
 
 type Problem2AnswerType =
-  String
+  Int
 
 const part1_examples: List(Example(Problem1AnswerType)) = [
   Example(
@@ -28,10 +28,6 @@ p=9,5 v=-3,-3",
   ),
 ]
 
-/// Add examples for part 2 here:
-/// ```gleam
-///const part2_examples: List(Example(Problem2AnswerType)) = [Example("some input", "")]
-/// ```
 const part2_examples: List(Example(Problem2AnswerType)) = []
 
 pub fn part1_test() {
@@ -46,6 +42,6 @@ pub fn part2_test() {
   part2_examples
   |> should.equal([])
   use example <- list.map(part2_examples)
-  solve.part2(example.input)
+  solve.part2(example.input, coord.new(0, 0))
   |> should.equal(example.answer)
 }
