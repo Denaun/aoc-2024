@@ -50,7 +50,17 @@ pub fn part1(input: String) {
 }
 
 pub fn part2(input: String) {
-  todo as "Implement solution to part 2"
+  let assert Ok(machines) = parser() |> atto.run(text.new(input), Nil)
+  machines
+  |> list.filter_map(fn(machine) {
+    let #(a, b, prize) = machine
+    tokens(
+      a,
+      b,
+      coord.add(prize, coord.new(10_000_000_000_000, 10_000_000_000_000)),
+    )
+  })
+  |> list.fold(0, int.add)
 }
 
 fn tokens(a: coord.Coord, b: coord.Coord, prize: coord.Coord) {
@@ -59,8 +69,14 @@ fn tokens(a: coord.Coord, b: coord.Coord, prize: coord.Coord) {
   case int.remainder(prize_factor, b_factor) {
     Ok(0) -> {
       let b_presses = prize_factor / b_factor
-      let a_presses = { prize.x - b.x * b_presses } / a.x
-      Ok(3 * a_presses + b_presses)
+      let a_factor = prize.x - b.x * b_presses
+      case int.remainder(a_factor, a.x) {
+        Ok(0) -> {
+          let a_presses = a_factor / a.x
+          Ok(3 * a_presses + b_presses)
+        }
+        _ -> Error(Nil)
+      }
     }
     _ -> Error(Nil)
   }
