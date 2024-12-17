@@ -1,9 +1,11 @@
 import adglent.{First, Second}
 import coord.{type Coord}
+import gleam/dict.{type Dict}
 import gleam/int
 import gleam/io
-import gleam/option.{type Option, None, Some}
-import gleam/result
+import gleam/list
+import gleam/option.{None, Some}
+import gleam/order
 import gleam/set.{type Set}
 import gleamy/pairing_heap
 import gleamy/priority_queue
@@ -74,7 +76,66 @@ fn shortest_path_loop(
 }
 
 pub fn part2(input: String) {
-  todo as "Implement solution to part 2"
+  let #(start, end, walls) = input |> parse()
+  let best = shortest_path(start, end, walls)
+  find_paths(best, start, end, walls)
+  |> list.flatten()
+  |> list.map(fn(x) { x.0 })
+  |> list.unique()
+  |> list.length()
+}
+
+fn find_paths(
+  target_cost: Int,
+  from: Coord,
+  to: Coord,
+  walls: Set(Coord),
+) -> List(List(#(Coord, Direction))) {
+  priority_queue.from_list([#(target_cost, [#(from, East)])], fn(a, b) {
+    int.compare(a.0, b.0) |> order.negate()
+  })
+  |> find_paths_loop(to, walls, dict.new())
+}
+
+fn find_paths_loop(
+  to_visit: pairing_heap.Heap(#(Int, List(#(Coord, Direction)))),
+  to: Coord,
+  walls: Set(Coord),
+  visited: Dict(#(Coord, Direction), Int),
+) -> List(List(#(Coord, Direction))) {
+  case to_visit |> priority_queue.pop() {
+    Error(Nil) -> []
+    Ok(#(#(0, [#(last, _), ..] as path), to_visit)) if last == to -> [
+      path |> list.reverse(),
+      ..{ to_visit |> find_paths_loop(to, walls, visited) }
+    ]
+    Ok(#(#(budget, path), to_visit)) -> {
+      let assert [state, ..] = path
+      case state, visited |> dict.get(state) {
+        _, Ok(max_budget) if max_budget > budget ->
+          to_visit
+          |> find_paths_loop(to, walls, visited)
+        #(from, direction), _ -> {
+          let next = from |> forward(direction)
+          case walls |> set.contains(next) {
+            True -> to_visit
+            _ ->
+              to_visit
+              |> priority_queue.push(
+                #(budget - 1, [#(next, direction), ..path]),
+              )
+          }
+          |> priority_queue.push(
+            #(budget - 1000, [#(from, direction |> left()), ..path]),
+          )
+          |> priority_queue.push(
+            #(budget - 1000, [#(from, direction |> right()), ..path]),
+          )
+          |> find_paths_loop(to, walls, visited |> dict.insert(state, budget))
+        }
+      }
+    }
+  }
 }
 
 type Direction {
