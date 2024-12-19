@@ -4,7 +4,6 @@ import atto/ops
 import atto/text
 import atto/text_util
 import gleam/dict.{type Dict}
-import gleam/float
 import gleam/int
 import gleam/io
 import gleam/list
@@ -47,24 +46,25 @@ fn parser() -> Parser(#(Dict(Register, Int), List(Int)), String, String, c, e) {
 
 pub fn part1(input: String) {
   let assert Ok(#(memory, program)) = parser() |> atto.run(text.new(input), Nil)
-  let #(_, _, output) = program |> execute(memory)
-  output |> list.map(int.to_string) |> string.join(",")
+  program
+  |> execute(memory)
+  |> list.map(int.to_string)
+  |> string.join(",")
 }
 
 pub fn part2(input: String) {
-  todo as "Implement solution to part 2"
+  let assert Ok(#(memory, program)) = parser() |> atto.run(text.new(input), Nil)
+  program
+  |> find_self(memory)
 }
 
-fn execute(
-  program: List(Int),
-  memory: Dict(Register, Int),
-) -> #(Int, Dict(Register, Int), List(Int)) {
-  let #(ip, memory, output) =
+fn execute(program: List(Int), memory: Dict(Register, Int)) -> List(Int) {
+  let #(_, _, output) =
     program
     |> list.index_map(fn(x, i) { #(i, x) })
     |> dict.from_list()
     |> execute_loop(#(0, memory, []))
-  #(ip, memory, output |> list.reverse())
+  output |> list.reverse()
 }
 
 fn execute_loop(
@@ -85,8 +85,11 @@ fn execute_loop(
           memory
             |> dict.insert(
               A,
-              { memory |> read(A) }
-                / { operand |> to_combo() |> resolve(memory) |> pow2() },
+              memory
+                |> read(A)
+                |> int.bitwise_shift_right(
+                  operand |> to_combo() |> resolve(memory),
+                ),
             ),
           output,
         )
@@ -102,7 +105,10 @@ fn execute_loop(
         Bst, Ok(operand) -> #(
           ip + 2,
           memory
-            |> dict.insert(B, { operand |> to_combo() |> resolve(memory) } % 8),
+            |> dict.insert(
+              B,
+              operand |> to_combo() |> resolve(memory) |> int.bitwise_and(7),
+            ),
           output,
         )
         Jnz, Ok(operand) -> {
@@ -121,7 +127,7 @@ fn execute_loop(
           output,
         )
         Out, Ok(operand) -> #(ip + 2, memory, [
-          { operand |> to_combo() |> resolve(memory) } % 8,
+          operand |> to_combo() |> resolve(memory) |> int.bitwise_and(0b111),
           ..output
         ])
         Bdv, Ok(operand) -> #(
@@ -129,8 +135,11 @@ fn execute_loop(
           memory
             |> dict.insert(
               B,
-              { memory |> read(A) }
-                / { operand |> to_combo() |> resolve(memory) |> pow2() },
+              memory
+                |> read(A)
+                |> int.bitwise_shift_right(
+                  operand |> to_combo() |> resolve(memory),
+                ),
             ),
           output,
         )
@@ -139,13 +148,55 @@ fn execute_loop(
           memory
             |> dict.insert(
               C,
-              { memory |> read(A) }
-                / { operand |> to_combo() |> resolve(memory) |> pow2() },
+              memory
+                |> read(A)
+                |> int.bitwise_shift_right(
+                  operand |> to_combo() |> resolve(memory),
+                ),
             ),
           output,
         )
       })
     Error(Nil) -> state
+  }
+}
+
+fn find_self(program: List(Int), memory: Dict(Register, Int)) -> Int {
+  program
+  |> list.index_map(fn(x, i) { #(i, x) })
+  |> dict.from_list()
+  |> find_self_loop(memory |> dict.insert(A, 1), program |> list.reverse())
+}
+
+fn find_self_loop(
+  program: Dict(Int, Int),
+  memory: Dict(Register, Int),
+  target: List(Int),
+) -> Int {
+  case program |> execute_loop(#(0, memory, [])) {
+    #(_, _, output) if output == target -> memory |> read(A)
+    #(_, _, output) ->
+      program
+      |> find_self_loop(
+        memory
+          |> dict.insert(
+            A,
+            memory
+              |> read(A)
+              |> case count_matches(target, output) == output |> list.length() {
+                True -> int.bitwise_shift_left(_, 3)
+                _ -> int.add(_, 1)
+              },
+          ),
+        target,
+      )
+  }
+}
+
+fn count_matches(a: List(v), b: List(v)) -> Int {
+  case a, b {
+    [x, ..a], [y, ..b] if x == y -> 1 + count_matches(a, b)
+    _, _ -> 0
   }
 }
 
@@ -185,11 +236,6 @@ fn resolve(op: Combo, memory: Dict(Register, Int)) -> Int {
     Register(r) -> memory |> read(r)
     Reserved -> panic
   }
-}
-
-fn pow2(exp: Int) -> Int {
-  let assert Ok(v) = int.power(2, exp |> int.to_float())
-  v |> float.round()
 }
 
 pub fn main() {
