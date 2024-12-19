@@ -8,7 +8,7 @@ type Problem1AnswerType =
   Int
 
 type Problem2AnswerType =
-  String
+  coord.Coord
 
 const part1_examples: List(Example(Problem1AnswerType)) = [
   Example(
@@ -41,11 +41,36 @@ const part1_examples: List(Example(Problem1AnswerType)) = [
   ),
 ]
 
-/// Add examples for part 2 here:
-/// ```gleam
-///const part2_examples: List(Example(Problem2AnswerType)) = [Example("some input", "")]
-/// ```
-const part2_examples: List(Example(Problem2AnswerType)) = []
+const part2_examples: List(Example(Problem2AnswerType)) = [
+  Example(
+    "5,4
+4,2
+4,5
+3,0
+2,1
+6,3
+2,4
+1,5
+0,6
+3,3
+2,6
+5,1
+1,2
+5,5
+2,5
+6,5
+1,4
+0,4
+6,4
+1,1
+6,1
+1,0
+0,5
+1,6
+2,0",
+    coord.Coord(6, 1),
+  ),
+]
 
 pub fn part1_test() {
   part1_examples
@@ -57,8 +82,8 @@ pub fn part1_test() {
 
 pub fn part2_test() {
   part2_examples
-  |> should.equal([])
+  |> should.not_equal([])
   use example <- list.map(part2_examples)
-  solve.part2(example.input)
+  solve.part2(example.input, coord.new(6, 6))
   |> should.equal(example.answer)
 }

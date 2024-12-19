@@ -21,14 +21,20 @@ fn parser() -> atto.Parser(List(coord.Coord), String, String, c, e) {
 
 pub fn part1(input: String, size: Coord, bytes: Int) {
   let assert Ok(pixels) = parser() |> atto.run(text.new(input), Nil)
-  shortest_path(
-    coord.new(0, 0),
-    size,
-    pixels |> list.take(bytes) |> set.from_list(),
-  )
+  let assert Ok(length) =
+    shortest_path(
+      coord.new(0, 0),
+      size,
+      pixels |> list.take(bytes) |> set.from_list(),
+    )
+  length
 }
 
-fn shortest_path(from: Coord, size: Coord, walls: Set(Coord)) -> Int {
+fn shortest_path(
+  from: Coord,
+  size: Coord,
+  walls: Set(Coord),
+) -> Result(Int, Nil) {
   let cost = fn(pair: #(Int, Coord)) {
     pair.0 + { pair.1 |> l1_distance(size) }
   }
@@ -43,17 +49,15 @@ fn shortest_path_loop(
   size: Coord,
   walls: Set(Coord),
   visited: Set(Coord),
-) -> Int {
-  let assert Ok(#(top, to_visit)) = to_visit |> priority_queue.pop()
-  case top {
-    #(cost, coord) if coord == size -> cost
-    #(cost, coord) -> {
-      [coord.new(-1, 0), coord.new(1, 0), coord.new(0, -1), coord.new(0, 1)]
-      |> list.map(coord.add(coord, _))
+) -> Result(Int, Nil) {
+  case to_visit |> priority_queue.pop() {
+    Error(Nil) -> Error(Nil)
+    Ok(#(#(cost, coord), _)) if coord == size -> Ok(cost)
+    Ok(#(#(cost, coord), to_visit)) -> {
+      coord
+      |> neighbors(size)
       |> list.filter(fn(next) {
-        { next.x >= 0 && next.y >= 0 && next.x <= size.x && next.y <= size.y }
-        && !{ visited |> set.contains(next) }
-        && !{ walls |> set.contains(next) }
+        !{ visited |> set.contains(next) } && !{ walls |> set.contains(next) }
       })
       |> list.fold(to_visit, fn(acc, next) {
         acc |> priority_queue.push(#(cost + 1, next))
@@ -63,8 +67,26 @@ fn shortest_path_loop(
   }
 }
 
-pub fn part2(input: String) {
-  todo as "Implement solution to part 2"
+pub fn part2(input: String, size: Coord) {
+  let assert Ok(pixels) = parser() |> atto.run(text.new(input), Nil)
+  let assert [blocking, ..] =
+    pixels
+    |> list.fold_until([], fn(acc, pixel) {
+      let pixels = [pixel, ..acc]
+      case shortest_path(coord.new(0, 0), size, pixels |> set.from_list()) {
+        Ok(_) -> list.Continue(pixels)
+        Error(Nil) -> list.Stop(pixels)
+      }
+    })
+  blocking
+}
+
+fn neighbors(c: Coord, size: Coord) -> List(Coord) {
+  [coord.new(-1, 0), coord.new(1, 0), coord.new(0, -1), coord.new(0, 1)]
+  |> list.map(coord.add(c, _))
+  |> list.filter(fn(next) {
+    next.x >= 0 && next.y >= 0 && next.x <= size.x && next.y <= size.y
+  })
 }
 
 fn l1_distance(a: Coord, b: Coord) -> Int {
@@ -80,7 +102,7 @@ pub fn main() {
       |> adglent.inspect
       |> io.println
     Second ->
-      part2(input)
+      part2(input, coord.new(70, 70))
       |> adglent.inspect
       |> io.println
   }
