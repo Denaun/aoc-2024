@@ -36,7 +36,7 @@ fn shortest_path(
   walls: Set(Coord),
 ) -> Result(Int, Nil) {
   let cost = fn(pair: #(Int, Coord)) {
-    pair.0 + { pair.1 |> l1_distance(size) }
+    pair.0 + { pair.1 |> coord.l1_distance(size) }
   }
   priority_queue.from_list([#(0, from)], fn(a, b) {
     int.compare(a |> cost(), b |> cost())
@@ -87,10 +87,6 @@ fn neighbors(c: Coord, size: Coord) -> List(Coord) {
   |> list.filter(fn(next) {
     next.x >= 0 && next.y >= 0 && next.x <= size.x && next.y <= size.y
   })
-}
-
-fn l1_distance(a: Coord, b: Coord) -> Int {
-  int.absolute_value(a.x - b.x) + int.absolute_value(a.y - b.y)
 }
 
 pub fn main() {

@@ -39,3 +39,7 @@ pub fn map3(a: Coord, b: Coord, c: Coord, f: fn(Int, Int, Int) -> Int) {
 pub fn is_inside(p: Coord, size: Coord) -> Bool {
   p.x >= 0 && p.y >= 0 && p.x < size.x && p.y < size.y
 }
+
+pub fn l1_distance(a: Coord, b: Coord) -> Int {
+  int.absolute_value(a.x - b.x) + int.absolute_value(a.y - b.y)
+}

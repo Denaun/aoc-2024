@@ -42,8 +42,22 @@ pub fn part1(input: String, at_least threshold: Int) {
   |> list.count(fn(cost) { cost >= threshold })
 }
 
-pub fn part2(input: String) {
-  todo as "Implement solution to part 2"
+pub fn part2(input: String, at_least threshold: Int) {
+  let #(start, end, walls) =
+    input
+    |> parse()
+  walls
+  |> find_path(start, end)
+  |> list.index_map(pair.new)
+  |> list.combination_pairs()
+  |> list.filter_map(fn(pair) {
+    let #(#(p0, c0), #(p1, c1)) = pair
+    case coord.l1_distance(p0, p1) {
+      d if d > 20 -> Error(Nil)
+      d -> Ok(c1 - c0 - d)
+    }
+  })
+  |> list.count(fn(cost) { cost >= threshold })
 }
 
 fn find_path(walls, start, end) {
@@ -102,7 +116,7 @@ pub fn main() {
       |> adglent.inspect
       |> io.println
     Second ->
-      part2(input)
+      part2(input, at_least: 100)
       |> adglent.inspect
       |> io.println
   }
