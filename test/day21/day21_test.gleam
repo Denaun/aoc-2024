@@ -7,7 +7,7 @@ type Problem1AnswerType =
   Int
 
 type Problem2AnswerType =
-  String
+  Int
 
 const part1_examples: List(Example(Problem1AnswerType)) = [
   Example(
@@ -20,10 +20,6 @@ const part1_examples: List(Example(Problem1AnswerType)) = [
   ),
 ]
 
-/// Add examples for part 2 here:
-/// ```gleam
-///const part2_examples: List(Example(Problem2AnswerType)) = [Example("some input", "")]
-/// ```
 const part2_examples: List(Example(Problem2AnswerType)) = []
 
 pub fn part1_test() {

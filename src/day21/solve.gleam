@@ -1,62 +1,87 @@
 import adglent.{First, Second}
 import coord.{type Coord}
-import gleam/dict.{type Dict}
+import gleam/bool
+import gleam/dict
 import gleam/int
 import gleam/io
 import gleam/list
 import gleam/order.{type Order}
-import gleam/set
+import gleam/set.{type Set}
 import gleam/string
-import gleam/string_tree
+import rememo/memo
 
 pub fn part1(input: String) {
   input
   |> string.split("\n")
   |> list.map(fn(code) {
     let assert Ok(numeric_part) = code |> string.drop_end(1) |> int.parse()
-    let assert Ok(shortest_sequence) =
-      code
-      |> directions(numeric_keypad())
-      |> list.flat_map(directions(_, directional_keypad()))
-      |> list.flat_map(directions(_, directional_keypad()))
-      |> list.map(string.length)
-      |> smallest(int.compare)
-    shortest_sequence * numeric_part
+    numeric_part * complexity(code, robots: 2)
   })
   |> list.fold(0, int.add)
 }
 
 pub fn part2(input: String) {
-  todo as "Implement solution to part 2"
+  input
+  |> string.split("\n")
+  |> list.map(fn(code) {
+    let assert Ok(numeric_part) = code |> string.drop_end(1) |> int.parse()
+    numeric_part * complexity(code, robots: 25)
+  })
+  |> list.fold(0, int.add)
 }
 
-fn directions(s: String, keypad: Dict(String, Coord)) -> List(String) {
-  let valid = keypad |> dict.values() |> set.from_list()
+fn complexity(code: String, robots robots: Int) -> Int {
+  use cache <- memo.create()
   let assert Ok(path) =
-    { "A" <> s }
+    { "A" <> code }
     |> string.to_graphemes()
-    |> list.try_map(dict.get(keypad, _))
+    |> list.try_map(dict.get(numeric_keypad(), _))
   path
   |> list.window_by_2()
-  |> list.fold([string_tree.new()], fn(acc, pair) {
-    let #(a, b) = pair
-    let h = case b.x - a.x {
-      n if n < 0 -> string.repeat("<", -n)
-      n -> string.repeat(">", n)
-    }
-    let v = case b.y - a.y {
-      m if m < 0 -> string.repeat("^", -m)
-      m -> string.repeat("v", m)
-    }
+  |> list.map(fn(pair) {
+    do_complexity(pair.0, pair.1, numeric_valid(), robots, cache)
+  })
+  |> list.fold(0, int.add)
+}
+
+fn do_complexity(
+  a: Coord,
+  b: Coord,
+  valid: Set(Coord),
+  robots: Int,
+  cache,
+) -> Int {
+  use <- memo.memoize(cache, #(a, b, robots))
+  let h = case b.x - a.x {
+    n if n < 0 -> string.repeat("<", -n)
+    n -> string.repeat(">", n)
+  }
+  let v = case b.y - a.y {
+    m if m < 0 -> string.repeat("^", -m)
+    m -> string.repeat("v", m)
+  }
+  let assert Ok(smallest) =
     [
       #(valid |> set.contains(coord.new(b.x, a.y)), h <> v <> "A"),
       #(valid |> set.contains(coord.new(a.x, b.y)), v <> h <> "A"),
     ]
     |> list.key_filter(True)
     |> list.unique()
-    |> list.flat_map(fn(move) { acc |> list.map(string_tree.append(_, move)) })
-  })
-  |> list.map(string_tree.to_string)
+    |> list.map(fn(code) {
+      use <- bool.guard(when: robots == 0, return: code |> string.length())
+      let assert Ok(path) =
+        { "A" <> code }
+        |> string.to_graphemes()
+        |> list.try_map(dict.get(directional_keypad(), _))
+      path
+      |> list.window_by_2()
+      |> list.map(fn(pair) {
+        do_complexity(pair.0, pair.1, directional_valid(), robots - 1, cache)
+      })
+      |> list.fold(0, int.add)
+    })
+    |> smallest(int.compare)
+  smallest
 }
 
 fn numeric_keypad() {
@@ -76,6 +101,10 @@ fn numeric_keypad() {
   |> dict.from_list()
 }
 
+fn numeric_valid() {
+  numeric_keypad() |> dict.values() |> set.from_list()
+}
+
 fn directional_keypad() {
   [
     #("^", coord.new(1, 0)),
@@ -85,6 +114,10 @@ fn directional_keypad() {
     #(">", coord.new(2, 1)),
   ]
   |> dict.from_list()
+}
+
+fn directional_valid() {
+  directional_keypad() |> dict.values() |> set.from_list()
 }
 
 fn smallest(l: List(v), by compare: fn(v, v) -> Order) -> Result(v, Nil) {
