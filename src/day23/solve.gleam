@@ -5,6 +5,7 @@ import gleam/io
 import gleam/list
 import gleam/option
 import gleam/pair
+import gleam/result
 import gleam/set
 import gleam/string
 
@@ -15,16 +16,7 @@ fn parse(input: String) -> Result(List(#(String, String)), Nil) {
 }
 
 pub fn part1(input: String) {
-  let assert Ok(connections) = input |> parse()
-  let connections =
-    connections
-    |> list.flat_map(fn(c) { [c, c |> pair.swap()] })
-    |> list.fold(dict.new(), fn(acc, pair) {
-      acc
-      |> dict.upsert(pair.0, fn(v) {
-        v |> option.lazy_unwrap(set.new) |> set.insert(pair.1)
-      })
-    })
+  let assert Ok(connections) = input |> parse() |> result.map(to_bidi_dict)
   {
     connections
     |> dict.keys()
@@ -56,7 +48,46 @@ pub fn part1(input: String) {
 }
 
 pub fn part2(input: String) {
-  todo as "Implement solution to part 2"
+  let assert Ok(connections) = input |> parse() |> result.map(to_bidi_dict)
+  largest_all_connected(connections)
+  |> list.sort(string.compare)
+  |> string.join(",")
+}
+
+fn largest_all_connected(connections) {
+  connections
+  |> largest_all_connected_loop([], connections |> dict.keys())
+}
+
+fn largest_all_connected_loop(connections, current, candidates) {
+  case candidates {
+    [] -> current
+    [first, ..rest] -> {
+      let with =
+        connections
+        |> largest_all_connected_loop(
+          [first, ..current],
+          candidates
+            |> list.filter(set.contains(neighbors(connections, first), _)),
+        )
+      let without = connections |> largest_all_connected_loop(current, rest)
+      case with |> list.length() >= without |> list.length() {
+        True -> with
+        False -> without
+      }
+    }
+  }
+}
+
+fn to_bidi_dict(connections) {
+  connections
+  |> list.flat_map(fn(c) { [c, c |> pair.swap()] })
+  |> list.fold(dict.new(), fn(acc, pair) {
+    acc
+    |> dict.upsert(pair.0, fn(v) {
+      v |> option.lazy_unwrap(set.new) |> set.insert(pair.1)
+    })
+  })
 }
 
 fn neighbors(d, k) {

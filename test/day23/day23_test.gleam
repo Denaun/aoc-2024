@@ -47,11 +47,43 @@ td-yn",
   ),
 ]
 
-/// Add examples for part 2 here:
-/// ```gleam
-///const part2_examples: List(Example(Problem2AnswerType)) = [Example("some input", "")]
-/// ```
-const part2_examples: List(Example(Problem2AnswerType)) = []
+const part2_examples: List(Example(Problem2AnswerType)) = [
+  Example(
+    "kh-tc
+qp-kh
+de-cg
+ka-co
+yn-aq
+qp-ub
+cg-tb
+vc-aq
+tb-ka
+wh-tc
+yn-cg
+kh-ub
+ta-co
+de-co
+tc-td
+tb-wq
+wh-td
+ta-ka
+td-qp
+aq-cg
+wq-ub
+ub-vc
+de-ta
+wq-aq
+wq-vc
+wh-yn
+ka-de
+kh-ta
+co-tc
+wh-qp
+tb-vc
+td-yn",
+    "co,de,ka,ta",
+  ),
+]
 
 pub fn part1_test() {
   part1_examples
@@ -63,7 +95,7 @@ pub fn part1_test() {
 
 pub fn part2_test() {
   part2_examples
-  |> should.equal([])
+  |> should.not_equal([])
   use example <- list.map(part2_examples)
   solve.part2(example.input)
   |> should.equal(example.answer)
