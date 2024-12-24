@@ -75,10 +75,6 @@ tnw OR pbm -> gnj",
   ),
 ]
 
-/// Add examples for part 2 here:
-/// ```gleam
-///const part2_examples: List(Example(Problem2AnswerType)) = [Example("some input", "")]
-/// ```
 const part2_examples: List(Example(Problem2AnswerType)) = []
 
 pub fn part1_test() {

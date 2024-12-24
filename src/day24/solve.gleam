@@ -30,9 +30,9 @@ fn parse(input: String) -> #(Dict(String, Bool), List(#(Gate, String))) {
       use left <- atto.do(id |> text_util.ws())
       use op <- atto.do(
         ops.choice([
-          text.match("AND") |> atto.map(fn(_) { bool.and }),
-          text.match("OR") |> atto.map(fn(_) { bool.or }),
-          text.match("XOR") |> atto.map(fn(_) { bool.exclusive_or }),
+          text.match("AND") |> atto.map(fn(_) { And }),
+          text.match("OR") |> atto.map(fn(_) { Or }),
+          text.match("XOR") |> atto.map(fn(_) { Xor }),
         ])
         |> text_util.ws(),
       )
@@ -50,21 +50,14 @@ pub fn part1(input: String) {
   let #(wires, gates) =
     input
     |> parse()
-
   wires
   |> propagate(gates)
-  |> dict.to_list()
-  |> list.filter(fn(pair) { pair.0 |> string.starts_with("z") })
-  |> list.map(fn(pair) {
-    case pair.1 {
-      True -> {
-        let assert Ok(bit) = pair.0 |> string.drop_start(1) |> int.parse()
-        int.bitwise_shift_left(1, bit)
-      }
-      False -> 0
-    }
+  |> dict.filter(fn(wire, _) { wire |> string.starts_with("z") })
+  |> dict.fold(0, fn(acc, wire, on) {
+    use <- bool.guard(when: !on, return: acc)
+    let assert Ok(bit) = wire |> string.drop_start(1) |> int.parse()
+    acc |> int.bitwise_or(1 |> int.bitwise_shift_left(bit))
   })
-  |> list.fold(0, int.add)
 }
 
 fn propagate(
@@ -84,16 +77,61 @@ fn propagate(
 }
 
 pub fn part2(input: String) {
-  todo as "Implement solution to part 2"
+  let #(wires, gates) =
+    input
+    |> parse()
+  let last_out = "z" <> { dict.size(wires) / 2 } |> int.to_string
+  gates
+  |> list.filter_map(fn(pair) {
+    let #(gate, out) = pair
+    case gate, out {
+      Gate(_, Xor, _), _ -> {
+        gates
+        |> list.find_map(fn(pair) {
+          case pair {
+            #(Gate(l, Or, r), _) if l == out || r == out -> Ok(out)
+            _ -> Error(Nil)
+          }
+        })
+      }
+      Gate(_, Or, _), "z" <> _ if out == last_out -> Error(Nil)
+      Gate(_, _, _), "z" <> _ -> Ok(out)
+      Gate(_, And, _), out -> {
+        gates
+        |> list.find_map(fn(pair) {
+          case pair {
+            #(Gate(_, Or, _), _) -> Error(Nil)
+            #(Gate(l, _, r), _) if l == out || r == out -> Ok(out)
+            _ -> Error(Nil)
+          }
+        })
+      }
+      _, _ -> Error(Nil)
+    }
+  })
+  |> list.sort(string.compare)
+  |> string.join(",")
 }
 
 type Gate {
-  Gate(left: String, op: fn(Bool, Bool) -> Bool, right: String)
+  Gate(left: String, op: Op, right: String)
+}
+
+type Op {
+  And
+  Or
+  Xor
 }
 
 fn eval(gate: Gate, wires: Dict(String, Bool)) -> Result(Bool, Nil) {
   case wires |> dict.get(gate.left), wires |> dict.get(gate.right) {
-    Ok(left), Ok(right) -> Ok(gate.op(left, right))
+    Ok(left), Ok(right) ->
+      case gate.op {
+        And -> bool.and
+        Or -> bool.or
+        Xor -> bool.exclusive_or
+      }(left, right)
+      |> Ok
     _, _ -> Error(Nil)
   }
 }
